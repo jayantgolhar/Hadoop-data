@@ -1,0 +1,177 @@
+1)mapred/MapTask.java
+>>
+added private org.apache.hadoop.mapreduce.RecordWriter<KEYOUT,VALUEOUT> output = null;
+>>
+to public class PSEMapContextImpl<KEYIN, VALUEIN, KEYOUT, VALUEOUT>
+
+*************************************************************************************************
+2)mapred/MapTask.java
+>>
+//MTP-fix
+reporter.setProgress(getProgress());
+// FIXME try to see if it needs checkpoint
+if (!needCheckpoint) {
+needCheckpoint = true;
+}
+>>
+to static class NewTrackingPSELineRecordReader<K, V> extends PSERecordReader<K, V> {
+
+*************************************************************************************************
+2)mapred/MapTask.java
+>>LOG.debug("WYG: Before initializing inputsplit and run, this MapTask is speculative?: " + umbilical.isSpeculative(getTaskID()));
+if (umbilical.isSpeculative(getTaskID())) {
+>>
+private <INKEY, INVALUE, OUTKEY, OUTVALUE> void runNewMapper(final JobConf job, final TaskSplitIndex splitIndex,
+
+*************************************************************************************************
+2)mapred/MapTask.java
+>>LOG.info("WYG: in MapTask.run(), after initialize(), this task is speculative? : " + umbilical.isSpeculative(getTaskID()));
+>>public void run(final JobConf job, final TaskUmbilicalProtocol umbilical)
+
+************************************************************************************************
+/home/jayant/Downloads/hadoop-branch-0.21-code-merging/mapreduce/src/java/org/apache/hadoop/mapred/MapTask.java:1178: error: cannot find symbol
+    [javac] 				output.initialize(outCkpt);
+    [javac] 				      ^
+    [javac]   symbol:   method initialize(byte[])
+
+>>mapred/maptask.java
+
+>>//MTP-fix
+int numberOfReduceTasks = job.getNumReduceTasks();
+if (numberOfReduceTasks == 0) {
+	output = new NewDirectOutputCollector(taskContext, job, umbilical, reporter);
+} else {
+	output = new NewOutputCollector(taskContext, job, umbilical, reporter);
+}
+>>//MTP-fix
+if (numberOfReduceTasks == 0) {
+	((NewDirectOutputCollector) output).initialize(outCkpt);
+} else {
+	((NewOutputCollector) output).initialize(outCkpt);
+}
+
+>>to private <INKEY, INVALUE, OUTKEY, OUTVALUE> void runNewMapper(final JobConf job, final TaskSplitIndex splitIndex,
+***************************************************************************************************
+1)hadoop-0.21.0/mapreduce/build.xml
+added zookeeper jar location to all path(total 3 path) 
+>><!-- MTP-fix -->
+    <pathelement location="../zookeeper/zookeeper-3.4.6.jar"/>
+>>to <path id="test.cluster.classpath">
+***************************************************************************************************
+added zookeeper folder in /hadoop-branch-0.21-code-merging/mapreduce/src/java/org/apache/hadoop/util/
+from http://www.javased.com/index.php?source_dir=Lily/global/zk-util/src/main/java/org/lilyproject/util/zookeeper/ZkUtil.java
+
+and create 3 file 
+1)ZkConnectException.java
+2)ZkUtil.java
+3)ZooKeeperItf.java	
+4)ZooKeeperImpl.java
+5)ZooKeeperOperation.java
+
+**************************************************************************************************
+1)added createPath() definition with 3 argument...just copy paste implementation of createPath() with four arguments
+mapreduce/src/java/org/apache/hadoop/util/zookeeper/ZkUtil.java
+**************************************************************************************************
+created class BytesUtil in file mapreduce/src/java/org/apache/hadoop/util/BytesUtil.java
+and add below code
+
+package org.apache.hadoop.util;
+
+import java.nio.ByteBuffer;
+
+public class BytesUtil {
+	public static byte[] long2byteArray(long l) {
+		byte b[] = new byte[8];
+
+		ByteBuffer buf = ByteBuffer.wrap(b);
+		buf.putLong(l);
+		return b;
+	}	
+
+	public static long byteArray2long(byte[] b) {
+		ByteBuffer buf = ByteBuffer.wrap(b);
+		return buf.getLong();
+	}
+}
+*******************************************************************************************************************************************************************************************************
+1)/home/jayant/Downloads/hadoop-branch-0.21-code-merging/mapreduce/src/java/org/apache/hadoop/mapred/TaskTracker.java:2562: error: cannot find symbol
+    [javac]             jobClient.checkSpeculationAndLaunch(task.getJobID(),
+
+>>added declaration of checkSpeculationAndLaunch() method to InterTrackerProtocol interface in InterTrackerProtocol.java
+
+public boolean checkSpeculationAndLaunch(JobID jobId, TaskAttemptID taskid);
+*******************************************************************************************************************************************************************************************************
+1)    V extends Object declared in class NewTrackingPSELineRecordReader
+    [javac] /home/jayant/Downloads/hadoop-branch-0.21-code-merging/mapreduce/src/java/org/apache/hadoop/mapred/MapTask.java:666: error: method does not override or implement a method from a supertype
+    [javac] 		@Override
+>>
+comment override for method checkpoint() and initialize() in class private class NewDirectOutputCollector<K, V> in file mapred/MapTask.java
+
+//MTP-fix
+//@Override
+public byte[] checkpoint() {
+	// TODO Auto-generated method stub
+	return "[NewDirectOutputCollector.checkpoint()],TODO..........".getBytes();
+}
+
+//MTP-fix
+//@Override
+public void initialize(byte[] checkpoint) throws IOException {
+	// TODO Auto-generated method stub
+	throw new IOException("NewDirectOutputCollector.initialize(byte[] checkpoint) needs to be implmented!!!");
+}
+*******************************************************************************************************************************************************************************************************
+1)/home/jayant/Downloads/hadoop-branch-0.21-code-merging/mapreduce/src/java/org/apache/hadoop/mapred/IsolationRunner.java:54: error: FakeUmbilical is not abstract and does not override abstract method isSpeculative(TaskAttemptID) in TaskUmbilicalProtocol
+    [javac]   static class FakeUmbilical implements TaskUmbilicalProtocol {
+>>
+put definition of getTrackerAddress() and isSpeculative(TaskAttemptID taskId) in mapred/IsolationRunner.java which implements TaskUmbilicalProtocol interface
+
+//MTP-fix
+public String getTrackerAddress(){
+  return "dummy getTrackerAddress";
+}
+
+//MTP-fix
+public boolean isSpeculative(TaskAttemptID taskId){
+  return false;
+}
+*******************************************************************************************************************************************************************************************************
+1)Same for LocalJobRunner.java file
+*******************************************************************************************************************************************************************************************************
+1)not able to find creatmode symbol in createPath() function in /mapreduce/src/java/org/apache/hadoop/util/zookeeper/ZkUtil.java
+/home/jayant/Downloads/hadoop-branch-0.21-code-merging/mapreduce/src/java/org/apache/hadoop/util/zookeeper/ZkUtil.java:125: error: cannot find symbol
+    [javac]                         return zk.create(subPath.toString(), data, ZooDefs.Ids.OPEN_ACL_UNSAFE, createMode);
+>> createmode is replace with CreateMode.PERSISTENT
+*******************************************************************************************************************************************************************************************************
+1)can not find symbol TrackerChildResponse
+
+>>change the return type of function statusUpdate() and ping() from TrackerChildResponse to boolean in file mapred/TaskTracker.java and mapred/TaskUmbilicalProtocol.java
+
+******************************************************************************************************************************************************************************************************
+1)Added two method in mapred/MapOutputFile.java
+
+//MTP-fix
+  public Path getCheckpointFileForRead(String file) throws IOException {
+      return lDirAlloc.getLocalPathToRead(TaskTracker.OUTPUT + "/" + file, conf);
+  }
+
+  //MTP-fix
+  public Path getCheckpointFileForWrite(ZipEntry ze) throws IOException{
+      return lDirAlloc.getLocalPathForWrite(TaskTracker.OUTPUT + "/" + ze.getName(), ze.getSize(), conf);
+  }
+******************************************************************************************************************************************************************************************************
+1)Changed the input parameter to getCheckpointFileForWrite() from string to ZipEntry for function copyCheckpointData() in file mapred/MapTask.java
+
+//MTP-fix
+//Path p = mapOutputFile.getCheckpointFileForWrite(ze.toString());
+Path p = mapOutputFile.getCheckpointFileForWrite(ze);
+******************************************************************************************************************************************************************************************************
+1)inserted method getSETaskState() in TaskInProgress class in mapred/TaskInProgress.java but need to check what value to return.
+
+//MTP-fix
+  public SpeculativeTaskState getSETaskState(TaskAttemptID taskid){
+    //Please fix where to get the enum to return 
+    return SpeculativeTaskState.Chosen;
+  }
+
+ 

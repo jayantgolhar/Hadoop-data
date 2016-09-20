@@ -1,0 +1,157 @@
+1)warning: 'includeantruntime' was not set, defaulting to build.sysclasspath=last; set to false for repeatable builds
+>>Simply set includeantruntime="false":
+<javac includeantruntime="false" ...>...</javac>
+******************************************************************************************************************************************************************************************************
+1)install findbug1.3.9
+Download Findbugs 1.3.9 from http://sourceforge.net/projects/findbugs/files/findbugs/1.3.9/ and update FINDBUGS_HOME environment variable and add %FINDBUGS_HOME%\bin to your path
+******************************************************************************************************************************************************************************************************
+1)Failed to parse plugin descriptor for org.apache.hadoop:hadoop-maven-plugins:2.7.2 during mvn compile
+>>cd hadoop-maven-plugins
+  mvn install
+
+and then 
+mvn compile
+mvn package -Pdist,native,docs,src -DskipTests -Dtar
+******************************************************************************************************************************************************************************************************
+1)Put repository in pom.xml file for stable hadoop version 2.7.2
+
+<repository>
+      <id>forplay-legacy</id>
+      <url>http://forplay.googlecode.com/svn/mavenrepo</url>
+</repository>
+
+******************************************************************************************************************************************************************************************************
+1)java.lang.NoSuchMethodError: org.objectweb.asm.ClassWriter.<init>(Lorg/objectweb/asm/ClassReader;I)V at com.thoughtworks.paranamer.generator.Enhancer.addExtraStaticField(Enhancer.java:64)
+>>replace asm-2.2.3.jar by asm-3.1.jar in ant/lib folder
+******************************************************************************************************************************************************************************************************
+1)Target "ivy-publish-local" does not exist in the project "Hadoop-common"
+
+>>run "ant clean jar jar-test mvn-install" instead of "ant clean jar jar-test ivy-publish-local"
+******************************************************************************************************************************************************************************************************
+1)jsp-compile doesn't support the "webxml" attribute
+>>I removed "webxml" attribute from jsp-compile tag
+******************************************************************************************************************************************************************************************************
+1)name clash: getMemoryCalculatorPlugin(Class<? extends org.apache.hadoop.util.MemoryCalculatorPlugin>,Configuration) in org.apache.hadoop.util.MemoryCalculatorPlugin and getMemoryCalculatorPlugin(Class<? extends org.apache.hadoop.mapreduce.util.MemoryCalculatorPlugin>,Configuration) in org.apache.hadoop.mapreduce.util.MemoryCalculatorPlugin have the same erasure, yet neither hides the other
+
+>>Deleted part of code from /home/jayant/Downloads/hadoop-0.21.0/mapred/src/java/org/apache/hadoop/util/MemoryCalculatorPlugin.java
+refer this link
+1.1 https://qnalist.com/questions/5989110/mumak-tutorial-and-how-to-build-mumak-from-source-code
+1.2 http://svn.apache.org/viewvc?view=revision&revision=1067068
+******************************************************************************************************************************************************************************************************
+1)BUILD FAILED
+/home/jayant/Downloads/hadoop-branch-0.21/mapreduce/build.xml:1361: artifact:install doesn't support the nested "attach" element.
+
+>>install maven 2.0.6 using svn co http://svn.apache.org/repos/asf/maven/components/tags/maven-2.0.6/
+install using ./bootstrap.sh and set M3_HOME="/home/jayant/maven-2.0.6/bootstrap/target/installation" instead of M2_HOME given in readme
+check mvn version using mvn -v
+
+Also download install-deploy-attached from svn co http://svn.apache.org/repos/asf/maven/sandbox/trunk/ant-tasks/install-deploy-attached/
+install using mvn isntall
+then copy /home/jayant/install-deploy-attached/target/maven-ant-tasks-1.0-SNAPSHOT.jar to $ANT_HOME/lib
+
+******************************************************************************************************************************************************************************************************
+Procedure to build Hadoop 0.21.0
+1)cd hadoop-0.21.0
+2)touch build.properties
+3)ln -s  build.properties  common
+   ln -s build.properties  hdfs
+   ln -s build.properties  mapreduce
+4)copy below content to build.properties
+version=0.21.0-alpha-15
+hadoop.version=${version}
+hadoop-core.version=${version}
+hadoop-mr.version=0.21.0-dev
+5)cd common 
+change the version in common/build.xml(<property name="version" value="0.21.0"/>)
+ant clean jar jar-test mvn-install
+6)cd hdfs
+change the version in common/build.xml(<property name="version" value="0.21.0"/>)
+First remove the webxml entry from build.xml
+ant clean jar jar-test mvn-install
+7)cd mapreduce
+change the version in common/build.xml(<property name="version" value="0.21.0"/>)
+First remove the webxml entry from build.xml
+delete some part of code from /home/jayant/Downloads/hadoop-branch-0.21-again-try/mapreduce/src/java/org/apache/hadoop/util/MemoryCalculatorPlugin.java
+make it like this
+public abstract class MemoryCalculatorPlugin extends
+    org.apache.hadoop.mapreduce.util.MemoryCalculatorPlugin {
+}
+
+ant clean jar jar-test mvn-install
+
+Code build successfully
+Happy Coding
+
+******************************************************************************************************************************************************************************************************
+ ::::::::::::::::::::::::::::::::::::::::::::::
+[ivy:resolve]         ::          UNRESOLVED DEPENDENCIES         ::
+[ivy:resolve]         ::::::::::::::::::::::::::::::::::::::::::::::
+[ivy:resolve]         :: org.apache.hadoop#hadoop-common;0.21.0: not found
+[ivy:resolve]         :: org.apache.hadoop#hadoop-common-test;0.21.0: not found
+[ivy:resolve]         :: org.apache.hadoop#hadoop-hdfs;0.21.0: not found
+[ivy:resolve]         ::::::::::::::::::::::::::::::::::::::::::::::
+>>
+Danie,
+You need to force ivy to pick up common jar from your local repository.
+Otherwise it downloads from the maven.org.
+Try this:
+1. build hadoop-common.
+2. 'ant mvn-install'    -  this should install it into the local repository.
+Ant will output the new location of the jars. You should see something like
+this at the end:
+
+[artifact:install] [INFO] Installing
+/Users/usr../hadoop-common/build/hadoop-common-0.22.0-SNAPSHOT.jar to
+/Users/usr_home/.m2/repository/org/apache/hadoop/hadoop-common/0.22.0-SNAPSH
+OT/hadoop-common-0.22.0-SNAPSHOT.jar
+
+3. cd to hadoop-hdfs.
+
+4. 'ant veryclean'    -    Or alternatively - remove all hadoop-common*.jar
+from ~/.m2 directory. This is needed to guarantee that ivy will try to get a
+new version of the common jar.
+
+5. 'ant -Dresolvers=internal jar-test'   -  You can use any other target,
+but make sure 'resolvers' is set to 'internal'. That will force ivy to get
+stuff from local repository. Watch the build - you should see something like
+this:
+
+Downloading 
+/Users/user/.m2/repository/org/apache/hadoop/hadoop-common/0.23.0-SNAPSHOT/h
+adoop-common-0.23.0-SNAPSHOT.jar ...
+[ivy:resolve] ....................... (1364kB)
+[ivy:resolve]   [SUCCESSFUL ]
+org.apache.hadoop#hadoop-common;0.23.0-SNAPSHOT!hadoop-common.jar (71ms)
+
+link:(https://groups.google.com/forum/#!topic/nosql-databases/UXXS221OL_4)
+
+******************************************************************************************************************************************************************************************************
+1)error: package org.apache.commons.io does not exist
+
+go to file /home/jayant/Downloads/hadoop-branch-0.21/common/src/java/org/apache/hadoop/metrics/ganglia/GangliaContext.java and remove import org.apache.commons.io.CharSets and its usage 
+byte[] bytes = s.getBytes(Charsets.UTF_8); ==> byte[] bytes = s.getBytes();
+******************************************************************************************************************************************************************************************************
+1)Not able to see Job specific resource utilisation in Ganglia
+
+>>Copy file GangliaContext.java and GangliaContext31.java from Newer version to hadoop 0.21.0
+in folder /home/jayant/Downloads/hadoop-branch-0.21/common/src/java/org/apache/hadoop/metrics/ganglia/
+
+******************************************************************************************************************************************************************************************************
+copy which file from hadoop-0.21.0 to hadoop-branch-0.21
+
+1.commom/conf/log4j.properties
+2.common/contrib/
+3.common/docs
+******************************************************************************************************************************************************************************************************
+After building hadoop-branch-0.21 and copying jar file to hadoop-0.21.0, if datanode not starting then copy the jar file to all slaves and then try
+>>sudo rsync -avxP /usr/local/hadoop-0.21.0 hduser@slave5:/usr/local/
+>>I solved my problem by following and slightly changing steps in the link. My master node was working but DataNode in slave node was not running. I copied the hadoop folder from master to slave node and changed conf/slaves and conf/masters files in slave node. Thanks
+
+LOG.debug("putting jobToken file name into environment fn=" + jobTokenFile);
+**********************************************************************************************
+1)Datanode not starting for particular node
+>>namespaceId should be same for all datanodes and namenode
+>>change namespaceId in /usr/local/hadoop_tmp/hdfs/hadoopdata/dfs/data/current/VERSION file for node on which datanode is not running
+**********************************************************************************************
+1)[error] The type java.util.Map$Entry cannot be resolved. It is indirectly referenced from required .class files
+>>change the from java 8 to java7

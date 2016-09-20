@@ -1,0 +1,34 @@
+Terasort
+
+1)6gb 512 mb block size
+run time = 10min 30sec
+max map run time = 1min 27sec
+min map run time = 27sec
+reduce task time = 9min 44sec
+speculative task = 3
+
+
+2)6gb 1024 mb block size
+run time = 12m9.042s
+max map run time = 3min 14sec
+min map run time = 53sec
+reduce task time = 11min 3sec
+speculative task = 3
+
+
+3)8gb 512 mb block size
+run time = 13m40.547s
+max map run time = 3min 33sec
+min map run time = 39sec
+Total map run time = 4min 6sec
+reduce task time = 12min 43sec
+speculative task = 4
+
+4)8gb 1024 mb block size
+run time = 16m3.486s
+max map run time = 5min 33sec
+min map run time = 1min 1sec
+Total map run time = 7min 12sec
+reduce task time = 12min 43sec
+speculative task = 2
+

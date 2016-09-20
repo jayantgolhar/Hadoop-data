@@ -1,0 +1,194 @@
+## To edit file, fire the below given command
+hduser@pingax:/usr/local/hadoop/etc/hadoop$ sudo gedit hdfs-site.xml
+
+## Paste these lines into <configuration> tag
+<property>
+      <name>dfs.replication</name>
+      <value>1</value>
+ </property>
+
+***SSH key***
+ssh-keygen -t rsa -P '' -f ~/.ssh/id_rsa
+cat $HOME/.ssh/id_rsa.pub >> $HOME/.ssh/authorized_keys
+ssh-copy-id -i $HOME/.ssh/id_rsa.pub hduser@slave1
+
+
+***permission**
+sudo mkdir -p /usr/local/hadoop_tmp/hdfs/hadoopdata
+sudo chown hduser:hadoop -R /usr/local/
+
+
+**hdfs command**
+hadoop fs -ls /
+hadoop fs -mkdir /jayant
+hadoop fs -put /etc/hosts /etc/hostname /jayant
+
+**Create User**
+sudo addgroup hadoop 
+sudo adduser --ingroup hadoop hduser
+sudo usermod -a -G sudo hduser﻿
+
+**run hadoop wordcount example**
+hadoop fs -rmr output
+hadoop jar /usr/local/hadoop/hadoop-mapred-examples-0.21.0.jar wordcount input output
+
+**To transfer file from one node to another**
+but keep in find that you have root permission on destination folder to create new folder
+
+>>sudo rsync -avxP /usr/local/hadoop/ hduser@slave5:/usr/local/
+
+**create symbolic link**
+>>ln -s /usr/local/hadoop-0.21.0/ /usr/local/hadoop
+
+>>change /usr/local/hadoop/conf/hadoop-metrics.properties file for integration of hadoop with ganglia
+
+************************************************************************************************
+Thanks to everyone, If you are using older version of Hadoop then put following files( from new version of Hadoop) ==>
+
+GangliaContext31.java
+GangliaContext.java
+In path ==> hadoop/src/core/org/apache/hadoop/metrics/ganglia From the new version of Hadoop
+************************************************************************************************
+
+Run different job
+
+1)Run RandomTextWriter job
+
+time hadoop jar ../hadoop-*examples*.jar randomtextwriter -D mapreduce.randomtextwriter.totalbytes=1099511627 randomtextwriter-output
+
+2)Run wordcount job
+
+time hadoop jar ../hadoop-*examples*.jar wordcount wordcount-input-5gb wordcount-output-5gb
+
+3)run grep example
+
+time hadoop jar ../hadoop-*examples*.jar grep wordcount-input-5gb grep-output-5gb ion[a-z]*
+
+**************************************************************************************
+kill hadoop process using name
+>>kill `jps | grep "DataNode" | cut -d " " -f 1`
+
+Print process information using pidstat
+>>pidstat -h -r -u -p `jps | grep "NameNode" | cut -d " " -f 1 | paste -sd,` 5
+
+using ps command
+>>ps aux|awk  '{print $2,$3,$4}' | grep -E `jps | grep -E "NameNode|Tracker" | cut -d " " -f 1 | paste -sd\|`
+
+sum the cpu and memory utilisation
+>>ps aux|awk  '{print $2,$3,$4}' | grep -E `jps | grep -E "NameNode|Tracker" | cut -d " " -f 1 | paste -sd\|` | awk '{ SUMCPU += $2; SUMMEM += $3} END { print SUMCPU, SUMMEM }'
+
+Measure network bandwidth usage for per process
+>>sudo nethogs -t -c 3 -v 0 | grep -E `jps | grep -E "Child|Tracker|Node" | cut -d " " -f 1 | paste -sd\|` | awk  '{print $2,$3}' > sample
+
+**************************************************************************************
+block size
+256 MB = 268435456
+512 MB = 536870912
+1024 MB = 1073741824
+
+*************************************************************************************
+If datanode is not starting
+
+>>If datanode is not starting, then clear the tmp folder before formatting the namenode using the following command
+
+>>hduser@ubuntu:~$ rm -Rf /app/hadoop/tmp/*
+
+**********************************************************************************************
+make pendrive bootable 
+
+>>sudo dd if=systemback_live_2016-08-23.iso of=/dev/sdb bs=1M
+
+**********************************************************************************************
+To turn off the safe mode
+>>hadoopuser@arul-PC:/usr/local/hadoop/bin$ ./hadoop dfsadmin -safemode leave
+
+**********************************************************************************************
+To clear page cache
+>>sudo  bash -c "echo 1 > /proc/sys/vm/drop_caches"
+
+***********************************************************
+step while installing new node from systemback iso image
+
+0)First remove previous entry for slave from /home/hduser/.ssh/known_hosts on master machine using following commands
+
+ssh-keygen -f "/home/hduser/.ssh/known_hosts" -R slave5
+
+error:Offending key for IP in /home/hduser/.ssh/known_hosts:4
+>>solution:remove fourth line in file /home/hduser/.ssh/known_hosts
+
+1)connect to slave?@slave?
+
+1)create new user hduser using below command
+sudo addgroup hadoop; sudo adduser --ingroup hadoop hduser; sudo usermod -a -G sudo hduser﻿ 
+
+2)copy public key of master to hduser@slave? using  below command
+ssh-copy-id -i $HOME/.ssh/id_rsa.pub hduser@slave?
+
+3)Now connect to hduser@slave?
+
+2)update .bashrc file of hduser with one available from master
+
+3)clear all content of hadoop_tmp folder using command
+rm -r *
+
+4)update IP address of master in /etc/hosts file
+
+5)if this error is coming ssh-keygen -f "/root/.ssh/known_hosts" -R slave1
+
+then first go to root using "sudo su" and then make changes
+
+6)If data node is not staring then copy the all the .jar files to particular node
+
+************************************************************************
+Install nethogs
+
+wget -c https://github.com/raboof/nethogs/archive/v0.8.5.tar.gz; tar xf v0.8.5.tar.gz; cd ./nethogs-0.8.5/; sudo apt-get install libncurses5-dev libpcap-dev; make && sudo make install ; nethogs -V; sudo nethogs
+
+*************************************************************************
+To not promt for password when doing sudo
+1)sudo su
+2)export VISUAL=vim; visudo
+3)add line at the end of file >>username ALL=(ALL) NOPASSWD: ALL
+4)enjoy
+**************************************************************************
+To kill all the child
+>>kill -9 `jps | grep -E "Child" | cut -d " " -f 1 | paste -sd" "`
+****************************************************************************
+measure disk size
+>>df -h
+
+****************************************************************************
+20 map and 20 task for 4GB is overshotting
+
+Observation found that Each Child task nearly take = 5% of 4GB = 204 MB
+
+2.8 GB = 15 task of 204 MB each
+
+free RAM on each slave at idle	
+GB 							slave1 	slave2 	slave3 	slave4 	slave5
+							2.8		6.2		6.5		2.7		2.6
+
+							15		30		30		15		15
+
+number of Map 				12		25		24		12		12			 			
+task per task tracker
+
+number of reduces 			3		5		6		3		3	
+task per task tracker
+
+Run 11 map task and 4 reduce task at a time on all nodes
+
+
+mapreduce.job.maps = does not take into account this parameter because every splits invoke its own map task.
+mapreduce.job.reduces = number of reduce task should run for one job
+
+>>Reduce task distrubuted equally across nodes
+>>Map task distrubuted equally across nodes
+
+Jobtracker only reads config file from master and not from slaves.
+
+Node 2 and node3 are fast. So mostly speculative task should run on these two nodes
+
+**********************************************************************************
+mapred-config used to define how much memory child jvm should take is defined by 
+mapred.child.java.opts property in mapred-site.xml

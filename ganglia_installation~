@@ -1,0 +1,20 @@
+**for master node**
+
+1)sudo apt-get install ganglia-monitor rrdtool gmetad  ganglia-webfrontend
+2)Press "Yes" two times for apache restart
+sudo mkdir -p /var/lib/ganglia/rrds
+sudo chown -R hduser:hadoop /var/lib/ganglia
+
+start service
+sudo service apache2 start
+sudo service ganglia-monitor start 
+sudo service gmetad start
+
+
+
+**For slaves Node**
+sudo apt-get install ganglia-monitor
+
+
+
+sudo service ganglia-monitor restart && sudo service gmetad restart && sudo service apache2 restart

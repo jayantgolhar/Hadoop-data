@@ -1,0 +1,94 @@
+1)mapred/MapTask.java
+>>
+added private org.apache.hadoop.mapreduce.RecordWriter<KEYOUT,VALUEOUT> output = null;
+>>
+to public class PSEMapContextImpl<KEYIN, VALUEIN, KEYOUT, VALUEOUT>
+
+*************************************************************************************************
+2)mapred/MapTask.java
+>>
+//MTP-fix
+reporter.setProgress(getProgress());
+// FIXME try to see if it needs checkpoint
+if (!needCheckpoint) {
+needCheckpoint = true;
+}
+>>
+to static class NewTrackingPSELineRecordReader<K, V> extends PSERecordReader<K, V> {
+
+*************************************************************************************************
+2)mapred/MapTask.java
+>>LOG.debug("WYG: Before initializing inputsplit and run, this MapTask is speculative?: " + umbilical.isSpeculative(getTaskID()));
+if (umbilical.isSpeculative(getTaskID())) {
+>>
+private <INKEY, INVALUE, OUTKEY, OUTVALUE> void runNewMapper(final JobConf job, final TaskSplitIndex splitIndex,
+
+*************************************************************************************************
+2)mapred/MapTask.java
+>>LOG.info("WYG: in MapTask.run(), after initialize(), this task is speculative? : " + umbilical.isSpeculative(getTaskID()));
+>>public void run(final JobConf job, final TaskUmbilicalProtocol umbilical)
+
+************************************************************************************************
+/home/jayant/Downloads/hadoop-branch-0.21-code-merging/mapreduce/src/java/org/apache/hadoop/mapred/MapTask.java:1178: error: cannot find symbol
+    [javac] 				output.initialize(outCkpt);
+    [javac] 				      ^
+    [javac]   symbol:   method initialize(byte[])
+
+>>mapred/maptask.java
+
+>>//MTP-fix
+int numberOfReduceTasks = job.getNumReduceTasks();
+if (numberOfReduceTasks == 0) {
+	output = new NewDirectOutputCollector(taskContext, job, umbilical, reporter);
+} else {
+	output = new NewOutputCollector(taskContext, job, umbilical, reporter);
+}
+>>//MTP-fix
+if (numberOfReduceTasks == 0) {
+	((NewDirectOutputCollector) output).initialize(outCkpt);
+} else {
+	((NewOutputCollector) output).initialize(outCkpt);
+}
+
+>>to private <INKEY, INVALUE, OUTKEY, OUTVALUE> void runNewMapper(final JobConf job, final TaskSplitIndex splitIndex,
+***************************************************************************************************
+1)hadoop-0.21.0/mapreduce/build.xml
+added zookeeper jar location to all path(total 3 path) 
+>><!-- MTP-fix -->
+    <pathelement location="../zookeeper/zookeeper-3.4.6.jar"/>
+>>to <path id="test.cluster.classpath">
+***************************************************************************************************
+added zookeeper folder in /hadoop-branch-0.21-code-merging/mapreduce/src/java/org/apache/hadoop/util/
+
+and create 3 file 
+1)ZkConnectException.java
+2)ZkUtil.java
+3)ZooKeeperItf.java	
+4)ZooKeeperImpl.java
+5)ZooKeeperOperation.java
+
+**************************************************************************************************
+1)added createPath() definition with 3 argument...just copy paste implementation of createPath() with four arguments
+mapreduce/src/java/org/apache/hadoop/util/zookeeper/ZkUtil.java
+**************************************************************************************************
+created class BytesUtil in file mapreduce/src/java/org/apache/hadoop/util/BytesUtil.java
+and add below code
+
+package org.apache.hadoop.util;
+
+import java.nio.ByteBuffer;
+
+public class BytesUtil {
+	public static byte[] long2byteArray(long l) {
+		byte b[] = new byte[8];
+
+		ByteBuffer buf = ByteBuffer.wrap(b);
+		buf.putLong(l);
+		return b;
+	}	
+
+	public static long byteArray2long(byte[] b) {
+		ByteBuffer buf = ByteBuffer.wrap(b);
+		return buf.getLong();
+	}
+}

@@ -1,0 +1,22 @@
+slaves		memory(GB)	CPU(core)	Hyper-core
+slave1		4			4			4
+slave2		8			4			4
+slave3		8			4			4
+slave4		4			2			2
+slave5		4			4			4
+
+
+
+Observations:
+1)Even if you login to system then also it will logout sometimes
+2)Systems will logout manytime continuesly if you did not login manually
+3)Its not a 
+
+2)cpu percentage cause to logout the machine
+3)Buffer cache get full for some of the nodes and those nodes get logout
+
+**Observations**
+1)9m2.595s-when initially run 10gb sorting 
+and now page cache is dirted
+7m42.196 - running same job when alreay page cahe is dirted with same data
+It took less time because page cache is already having this data

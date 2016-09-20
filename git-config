@@ -1,0 +1,9 @@
+1)First create repository on github
+
+git config --global user.name "Jayant Golhar"
+git config --global user.email "jayant.golhar68@gmail.com"
+git init
+git add .
+git commit -m 'initial commit comment'
+git remote add origin https://github.com/jayantgolhar/Hadoop-0.21.0.git //git url from github site
+git push -u origin master

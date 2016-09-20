@@ -1,0 +1,52 @@
+## To edit file, fire the below given command
+hduser@pingax:/usr/local/hadoop/etc/hadoop$ sudo gedit hdfs-site.xml
+
+## Paste these lines into <configuration> tag
+<property>
+      <name>dfs.replication</name>
+      <value>1</value>
+ </property>
+
+***SSH key***
+ssh-keygen -t rsa -P '' -f ~/.ssh/id_rsa
+cat $HOME/.ssh/id_rsa.pub >> $HOME/.ssh/authorized_keys
+ssh-copy-id -i $HOME/.ssh/id_rsa.pub hduser@slave1
+
+
+***permission**
+sudo mkdir -p /usr/local/hadoop_tmp/hdfs/hadoopdata
+sudo chown hduser:hadoop -R /usr/local/
+
+
+**hdfs command**
+hadoop fs -ls /
+hadoop fs -mkdir /jayant
+hadoop fs -put /etc/hosts /etc/hostname /jayant
+
+**Create User**
+sudo addgroup hadoop 
+sudo adduser --ingroup hadoop hduser
+sudo usermod -a -G sudo hduser﻿
+
+**run hadoop wordcount example**
+hadoop fs -rmr output
+hadoop jar /usr/local/hadoop/hadoop-mapred-examples-0.21.0.jar wordcount input output
+
+**To transfer file from one node to another**
+but keep in find that you have root permission on destination folder to create new folder
+
+>>sudo rsync -avxP /usr/local/hadoop-0.21.0 hduser@slave5:/usr/local/
+
+**create symbolic link**
+>>ln -s /usr/local/hadoop-0.21.0/ /usr/local/hadoop
+
+>>change /usr/local/hadoop/conf/hadoop-metrics.properties file for integration of hadoop with ganglia
+
+************************************************************************************************
+Thanks to everyone, If you are using older version of Hadoop then put following files( from new version of Hadoop) ==>
+
+GangliaContext31.java
+GangliaContext.java
+In path ==> hadoop/src/core/org/apache/hadoop/metrics/ganglia From the new version of Hadoop
+************************************************************************************************
+

@@ -1,0 +1,55 @@
+
+
+******************************************************************************************************************************************
+TaskTracker.java
+
+1) taskToSpeculativeFlag maintains the information about the tasks which is speculated.
+
+1)offerService() function Main service loop. Will stay in this loop forever. And continuesly sends heartbeat to JobTracker and receive resposes for heartbeat messages.
+If JobTracker says to Checkpoint the task then add this repsonse to needCheckpointTasks
+
+2)TaskLauncher.run()->startNewTask()->launchTaskForJob()->launchTask()
+
+3)TaskLauncher.run()->startNewTask()->launchTaskForJob()->launchTask()->setSpeculativeFlag()
+
+setSpeculativeFlag() set the taskToSpeculativeFlag[taskId] = true for that task.
+
+******************************************************************************************************************************************
+MapTask.java
+
+1)public class PSEMapContextImpl<KEYIN, VALUEIN, KEYOUT, VALUEOUT> will decide whether to checkpoint or not while calling nextKeyValue(). If need to checkpoint then calls doCheckpoint().
+
+doCheckpoint(){
+	preCheckpoint()
+	inputCheckpoint
+	outputCheckpoint
+	postCheckpoint()
+}
+
+2)runWSENewMapper() implements full speculative execution
+
+3)runNewMapper() starts either PSE new map task or normal new map task depending on either isSpeculative flag is set or not.
+
+4)mapOutCkpt contains following things
+	a)mapOutCkpt.taskAttempt,
+	b)mapOutCkpt.startIndex, 
+	c)mapOutCkpt.numSpills
+
+		  ______runNewMapper()
+5)run()--|______
+				runOldMapper()
+
+
+6)Hadoop indentify straggler task and starts the speculative task using runNewMapper() and waits until original task finished checkpointing or timeout whichever occur first.
+
+******************************************************************************************************************************************
+JobInProgress.java
+
+How speculative task is identified?
+
+obtainNewMapTask()->findNewMapTask()->getSpeculativeMap()->findSpeculativeTask()
+
+2)Selection of tasks \emph{within} a job is mostly done by the {\tt JobInProgress} class, and not by individual schedulers. {\tt JobInProgress} exposes two methods, {\tt obtainNewMapTask} and {\tt obtainNewReduceTask}, to launch a task of either type. Both methods may either return a {\tt Task} object or {\tt null} if the job does not wish to launch a task. Whether a job wishes to launch a task may change back and forth during its lifetime. Even after all tasks in the job have been started, the job may wish to run another task for speculative execution. In addition, if the node containing a map task failed, the job will wish to re-run it to rebuild its output for use in the reduce tasks. Schedulers may therefore need to poll multiple jobs until they find one with a task to run.
+
+Line Number: 119
+Finally, for map tasks, an important scheduling criterion is data locality: running the task on a node or rack that contains its input data. Normally, {\tt JobInProgress.obtainNewMapTask} returns the ``closest" map task to a given node. However, to give schedulers slightly more control over data locality, there is also a version of {\tt obtainNewMapTask} that allow the scheduler to cap the level of non-locality allowed for the task (e.g.~request a task only on the same node, or {\tt null} if none is available). The Fair Scheduler uses this method with an algorithm called delay scheduling (Section \ref{sec:delay-scheduling}) to optimize data locality.

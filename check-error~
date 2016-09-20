@@ -1,0 +1,11 @@
+1)mapred/maptask.java
+>> notCheckpointConfidence symbol not found
+// FIXME: sure that not to checkpoint
+	public synchronized void disableCheckpoint() {
+		notCheckpointConfidence = true;
+	}
+
+*************************************************************************************************
+2)mapred/maptask.java
+setSpeculative(umbilical.isSpeculative(getTaskID()));
+		setHttpAddr(umbilical.getTrackerAddress());

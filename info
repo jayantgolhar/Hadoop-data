@@ -1,0 +1,10 @@
+1)Where to put log statement to see in log file
+>> vi /usr/local/hadoop-0.21.0/common/src/java/org/apache/hadoop/util/StringUtils.java 
+put below code in startupShutdownMessage()
+LOG.info(toStartupShutdownString("Sample-Log-Jayant: ", new String[]{
+  "Shutting down " + classname + " at " + hostname}));
+
+**************************************************************************************************
+1)Conclusion that don't put hadoop-mapreduce-0.21.0.jar from hadoop-branch-0.21/ to hadoop-0.21.0/
+It gives error when running job.
+error->Caused by: java.io.IOException: Exceeded MAX_FAILED_UNIQUE_FETCHES; bailing-out
